@@ -1,0 +1,906 @@
+---
+title: "UNOS"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 10, fig.height = 12, results="asis")
+```
+
+#Packages
+```{r}
+library(ggplot2)
+library(survminer)
+library(survival)
+library(dplyr)
+library(tidyverse)
+library(data.table) 
+library(forestmodel) 
+library(Hmisc) 
+library(sjPlot) 
+library(stargazer) 
+library(sjmisc) 
+library(arsenal) 
+library(gtsummary)
+library(expss) 
+library(lubridate)
+library(ggsignif)
+library(haven)
+library(cmprsk)
+
+#For Figure 2
+library(viridis)
+library(hrbrthemes)
+library(scales)
+library(ggsci)
+
+#For multiple imputation
+library(mice)
+library(mitools)
+
+options(scipen=999)
+```
+
+**Canadian data**
+**Read in data**
+```{r}
+corrdata <- read_sav("/Users/Ivanics/Desktop/corr_new.sav")
+```
+
+**Additional codes Jan 2 2021**
+```{r}
+corrdata %>% group_by(LIVER_RNA_DETECTABLE_FLAG) %>% count() %>% ungroup()
+
+corrdata <- corrdata %>% mutate(Donor_relation = factor(Donor_type1, labels = c("Deceased donor", "Parent", "Sibling", "Offspring", "Other relative", "Other living unrelated", "Spouse", "Anonymous/altruistic", "Domino donor"))
+)
+
+corrdata <- corrdata %>% mutate(Prior_NonLiverTx = factor(Prior_NonLiverTx, labels = "No previous transplant", "Previous organ transplant other than liver"))
+
+corrdata <- corrdata %>% mutate(LIVER_REDUCTION_FLAG_clean = factor(LIVER_REDUCTION_FLAG_clean, labels = c("No", "Yes")))
+
+corrdata <- corrdata %>% mutate(PRIMARY_METASTATIC_TUMOUR_FLAG = case_when(
+  PRIMARY_METASTATIC_TUMOUR_FLAG == "" ~ NA_real_,
+  PRIMARY_METASTATIC_TUMOUR_FLAG == "N" ~ 0,
+  PRIMARY_METASTATIC_TUMOUR_FLAG == "Y" ~ 1,
+  PRIMARY_METASTATIC_TUMOUR_FLAG == "U" ~ NA_real_
+)) %>% mutate(PRIMARY_METASTATIC_TUMOUR_FLAG = factor(PRIMARY_METASTATIC_TUMOUR_FLAG, labels = c("No", "Yes")))
+
+corrdata <- corrdata %>% mutate(LIVER_HEP_B_TREATMENT_CODE = case_when(
+  LIVER_HEP_B_TREATMENT_CODE == "" ~ NA_real_,
+  LIVER_HEP_B_TREATMENT_CODE == "0" ~ 0,
+  LIVER_HEP_B_TREATMENT_CODE == "2" ~ 1,
+  LIVER_HEP_B_TREATMENT_CODE == "3" ~ 2,
+  LIVER_HEP_B_TREATMENT_CODE == "9" ~ 3
+)) %>% 
+  mutate(LIVER_HEP_B_TREATMENT_CODE = factor(LIVER_HEP_B_TREATMENT_CODE, labels = c("No", "Lamivudine", "Other", "Unknown")))
+
+corrdata <- corrdata %>% mutate(LIVER_HEP_C_TREATMENT_CODE = case_when(
+  LIVER_HEP_C_TREATMENT_CODE == "" ~ NA_real_,
+  LIVER_HEP_C_TREATMENT_CODE == "0" ~ 0,
+  LIVER_HEP_C_TREATMENT_CODE == "2" ~ 1,
+  LIVER_HEP_C_TREATMENT_CODE == "3" ~ 2,
+  LIVER_HEP_C_TREATMENT_CODE == "9" ~ 3
+)) %>% 
+  mutate(LIVER_HEP_C_TREATMENT_CODE = factor(LIVER_HEP_C_TREATMENT_CODE, labels = c("No", "Interferon", "Both Interferon and Ribavirin", "Unknown")))
+
+corrdata <- corrdata %>% mutate(LIVER_RNA_DETECTABLE_FLAG = case_when(
+  LIVER_RNA_DETECTABLE_FLAG == "" ~ NA_real_,
+  LIVER_RNA_DETECTABLE_FLAG == "N" ~ 0,
+  LIVER_RNA_DETECTABLE_FLAG == "Y" ~ 1,
+  LIVER_RNA_DETECTABLE_FLAG == "U" ~ 2,
+  )) %>%
+  mutate(LIVER_RNA_DETECTABLE_FLAG = factor(LIVER_RNA_DETECTABLE_FLAG, labels = c("No/Negative", "Yes", "Unknown/missing response")))
+```
+
+**Recoding and renaming**
+```{r}
+corrdata <- corrdata %>% 
+  rename(REGID=RECIPIENT_ID)
+
+#Rename TX_YEAR variable
+corrdata <- corrdata %>%
+  rename(TX_YR = Year)
+
+#Keep only adult patients
+corrdata <- corrdata %>% filter(
+  Age >= 18
+)
+
+corrdata <- corrdata %>% 
+  rename(RAGE = Age)
+
+#Limit to first-time liver only transplants (multivisc already excluded)
+corrdata <- corrdata %>% filter(
+  Graft_num1 == 1
+)
+
+
+corrdata <- corrdata %>% filter(
+  gtime_days >= 0
+)
+
+corrdata <- corrdata %>% filter(
+ time_lastfu_days >= 0
+)
+
+corrdata <- corrdata %>% 
+  rename(GSURV = gtime_days,
+         GCENS = Gstatus_txp,
+         PSURV = time_lastfu_days,
+         PCENS = Status
+         )
+
+corrdata <- corrdata %>%
+  mutate(PCENS = as.numeric(PCENS)) %>%
+  mutate(GCENS = as.numeric(GCENS))
+```
+
+**Donor characteristics**
+```{r}
+#Donor age
+corrdata <- corrdata %>% rename(
+  DAGE = age_years_donor
+)
+
+corrdata$DAGE <- as.numeric(corrdata$DAGE)
+
+#Donor type
+corrdata <- corrdata %>% mutate(
+  DCD = case_when(
+    donor_death_type_code_donor == 1 ~ 1,
+    donor_death_type_code_donor == 0 ~ 0,
+    is.na(donor_death_type_code_donor) ~ NA_real_
+  )
+)
+
+corrdata <- corrdata %>% mutate(
+  LDLT = case_when(
+    Allograft_type == 1 ~ 0,
+    Allograft_type == 2 ~ 1,
+    Allograft_type == 3 ~ 0,
+    is.na(Allograft_type) ~ NA_real_
+  )
+)
+
+corrdata <- corrdata %>% mutate(
+  DTYPE = case_when(
+    DCD == 1 ~ 1,
+    LDLT == 1 ~ 2,
+    TRUE ~ 0
+  )
+)
+
+corrdata <- corrdata %>% mutate(
+  DTYPE = factor(DTYPE, labels = c("DBD", "DCD", "LDLT")) 
+)
+
+#Cause of death
+corrdata <- corrdata %>% mutate(
+  DONCOD = case_when(
+    corrdata$DEATH_CAUSE_CADAVER_CODE_donor == "03" ~ 1,
+    corrdata$DEATH_CAUSE_CADAVER_CODE_donor == "04" ~ 1,
+    corrdata$DEATH_CAUSE_CADAVER_CODE_donor == "02" ~ 2,
+    corrdata$DEATH_CAUSE_CADAVER_CODE_donor == "07" ~ 2,
+    corrdata$DEATH_CAUSE_CADAVER_CODE_donor == "08" ~ 2,
+    corrdata$DEATH_CAUSE_CADAVER_CODE_donor == "10" ~ 2,
+    corrdata$DEATH_CAUSE_CADAVER_CODE_donor == "01" ~ 3,
+    !is.na(corrdata$DEATH_CAUSE_CADAVER_CODE_donor) ~ 4,
+    is.na(corrdata$DEATH_CAUSE_CADAVER_CODE_donor) ~ NA_real_
+  )
+)
+
+corrdata <- corrdata %>% mutate(
+  DONCOD = factor(DONCOD, labels = c("Trauma", "CVA", "Cerebral Anoxia", "Other")) 
+)
+
+#BMI
+corrdata <- corrdata %>% rename(DBMI = Donor_BMI)
+
+corrdata$DBMI <- as.numeric(corrdata$DBMI)
+
+#Donor sex
+corrdata <- corrdata %>% mutate(
+  DSEX = case_when(
+    SEX_CODE_donor == 1 ~ 1,
+    SEX_CODE_donor == 0 ~ 0,
+    is.na(SEX_CODE_donor) ~ NA_real_
+  )
+)
+
+corrdata <- corrdata %>% mutate(
+  DSEX = factor(DSEX, labels = c("Female", "Male"))
+)
+
+#Donor ABO match not appropriately coded
+
+#Donor graft type
+corrdata <- corrdata %>% mutate(
+  GRAFT_TYPE = case_when(
+    ORGAN_TYPE_CODE == 20 ~ 1,
+    ORGAN_TYPE_CODE == 21 ~ 2,
+    ORGAN_TYPE_CODE == 22 ~ 2,
+    ORGAN_TYPE_CODE == 23 ~ 2,
+  )
+)
+
+corrdata <- corrdata %>% mutate(
+  GRAFT_TYPE = factor(GRAFT_TYPE, labels= c("Whole", "Segmental"))
+)
+
+#Donor graft type extended
+corrdata <- corrdata %>% mutate(
+  GRAFT_TYPE_extended = case_when(
+    ORGAN_TYPE_CODE == 20 ~ 1,
+    ORGAN_TYPE_CODE == 21 ~ 2,
+    ORGAN_TYPE_CODE == 22 ~ 3,
+    ORGAN_TYPE_CODE == 23 ~ 4
+  )
+)
+
+corrdata <- corrdata %>% mutate(
+  GRAFT_TYPE_extended = factor(GRAFT_TYPE_extended, labels= c("Whole", "Left lobe", "Right lobe", "Left lateral segment"))
+)
+
+#CIT
+corrdata$COLD_ISC_TIME_MINUTES <- as.numeric(corrdata$COLD_ISC_TIME_MINUTES)
+
+corrdata <- corrdata %>% mutate(
+  CIT = COLD_ISC_TIME_MINUTES
+)
+
+#CMV status donor
+corrdata <- corrdata %>% mutate(
+  DCMV = case_when(
+    corrdata$CMV_FLAG_donor_clean == "1" ~ 1,
+    corrdata$CMV_FLAG_donor_clean == "0" ~ 0,
+    TRUE ~ NA_real_)) 
+
+corrdata <- corrdata %>% mutate(DCMV = 
+    factor(DCMV, labels = c("Negative", "Positive")))
+
+corrdata <- corrdata %>% mutate(
+  DRBG = case_when(
+    corrdata$BLOOD_TYPE_CODE_donor == "O" ~ 1,
+    corrdata$BLOOD_TYPE_CODE_donor == "A" ~ 2,
+    corrdata$BLOOD_TYPE_CODE_donor == "B" ~ 3,
+    corrdata$BLOOD_TYPE_CODE_donor == "AB" ~ 4
+  ))%>% 
+  mutate(DRBG = factor(DRBG, labels = c("0", "A", "B", "AB")))
+
+#Ethnicity
+corrdata <- corrdata %>% mutate(
+  DETHNIC = case_when(
+    Racial_Origin_donor == "01" ~ 0,
+    Racial_Origin_donor == "02" ~ 1,
+    Racial_Origin_donor == "03" ~ 2,
+    Racial_Origin_donor == "98" ~ 4,
+    TRUE ~ 3,
+  )
+)
+
+corrdata <- corrdata %>% mutate(
+  DETHNIC = factor(DETHNIC, labels = c("White", "Asian", "Black", "Other", "Unknown"))
+)
+
+corrdata <- corrdata %>% mutate(
+  SMOKER_FLAG_donor_clean = factor(SMOKER_FLAG_donor_clean)
+) %>% 
+  mutate(HYPERTENSION_FLAG_donor_clean = factor(HYPERTENSION_FLAG_donor_clean)) %>%
+  mutate(DIABETES_FLAG_donor_clean = factor(DIABETES_FLAG_donor_clean)) %>%
+  mutate(DCD = factor(DCD))
+
+```
+
+**Recipient characteristics**
+```{r}
+#Gender
+corrdata <- corrdata %>% mutate(
+  RSEX = case_when(
+    SEX_CODE == 1 ~ 1,
+    SEX_CODE == 0 ~ 0
+  ) 
+)
+
+corrdata <- corrdata %>% mutate(
+  RSEX = factor(RSEX, labels = c("Female", "Male"))
+)
+
+#Ethnicity
+corrdata <- corrdata %>% mutate(
+  RETHNIC = case_when(
+    Racial_Origin == "01" ~ 0,
+    Racial_Origin == "02" ~ 1,
+    Racial_Origin == "03" ~ 2,
+    Racial_Origin == "98" ~ 4,
+    TRUE ~ 3,
+  )
+)
+
+corrdata <- corrdata %>% mutate(
+  RETHNIC = factor(RETHNIC, labels = c("White", "Asian", "Black", "Other", "Unknown"))
+)
+
+
+#Renal support
+corrdata <- corrdata %>% mutate(RREN_SUP = case_when(
+  Prior_Dialysis == 1 ~ 1,
+  Prior_Dialysis == 0 ~ 0,
+  is.na(Prior_Dialysis) ~ NA_real_
+))
+
+corrdata <- corrdata %>% mutate(
+  RREN_SUP = factor(RREN_SUP, labels = c("No pre-tx support", "Pre-tx support"))
+)
+
+#Ventilator status
+corrdata <- corrdata %>% mutate(
+  RVENT = case_when(
+    corrdata$MEDICAL_STATUS_CODE_clean == "18" ~ 1,
+    corrdata$MEDICAL_STATUS_CODE_clean == "05" ~ 0,
+    corrdata$MEDICAL_STATUS_CODE_clean == "11" ~ 0,
+    corrdata$MEDICAL_STATUS_CODE_clean == "12" ~ 0,
+    corrdata$MEDICAL_STATUS_CODE_clean == "16" ~ 0,
+    corrdata$MEDICAL_STATUS_CODE_clean == "17" ~ 0,
+    corrdata$MEDICAL_STATUS_CODE_clean == "19" ~ 0,
+    TRUE ~ NA_real_
+  )  
+) %>%
+  mutate(
+    RVENT = factor(
+      RVENT, labels = 
+        c("Not ventilated", "Ventilated"
+          )))
+
+
+#Medical status at transplant (19 and 16 grouped into one category as either tumor patient or at home per Gonzalo but these can be also be treated separately)
+corrdata <- corrdata %>% mutate(
+  Medical_status = case_when(
+    corrdata$MEDICAL_STATUS_CODE_clean == "19" ~ 1,
+    corrdata$MEDICAL_STATUS_CODE_clean == "16" ~ 1,
+    corrdata$MEDICAL_STATUS_CODE_clean == "17" ~ 2,
+    corrdata$MEDICAL_STATUS_CODE_clean == "5" ~ 3,
+    corrdata$MEDICAL_STATUS_CODE_clean == "11" ~ 4,
+    corrdata$MEDICAL_STATUS_CODE_clean == "18" ~ 5,
+    corrdata$MEDICAL_STATUS_CODE_clean == "12" ~ 6,
+    TRUE ~ NA_real_
+  )  
+) %>%
+  mutate(
+    Medical_status = factor(
+      Medical_status, labels = 
+        c("Tumor patient 1T or At home 1", "Hospitalized 2", "Hospitalized/ICU 3", "Fulminant 3F", "ICU intubated/ventilated 4", "Fulminant 4F"
+          )))
+
+#Medical status at listing
+corrdata <- corrdata %>% mutate(
+  Start_Medical_status = case_when(
+    corrdata$START_MEDICAL_STATUS_CODE == "19" ~ 1,
+    corrdata$START_MEDICAL_STATUS_CODE == "16" ~ 1,
+    corrdata$START_MEDICAL_STATUS_CODE == "17" ~ 2,
+    corrdata$START_MEDICAL_STATUS_CODE == "5" ~ 3,
+    corrdata$START_MEDICAL_STATUS_CODE == "11" ~ 4,
+    corrdata$START_MEDICAL_STATUS_CODE == "18" ~ 5,
+    corrdata$START_MEDICAL_STATUS_CODE == "12" ~ 6,
+    TRUE ~ NA_real_
+  )  
+) %>%
+  mutate(
+    Start_Medical_status = factor(
+      Start_Medical_status, labels = 
+        c("Tumor patient 1T or At home 1", "Hospitalized 2", "Hospitalized/ICU 3", "Fulminant 3F", "ICU intubated/ventilated 4", "Fulminant 4F"
+          )))
+
+#Recipient blood group
+corrdata <- corrdata %>% mutate(
+  RBG = case_when(
+    corrdata$BLOOD_TYPE_CODE == "O" ~ 1,
+    corrdata$BLOOD_TYPE_CODE == "A" ~ 2,
+    corrdata$BLOOD_TYPE_CODE == "B" ~ 3,
+    corrdata$BLOOD_TYPE_CODE == "AB" ~ 4
+  ))%>% 
+  mutate(RBG = factor(RBG, labels = c("0", "A", "B", "AB")))
+  
+#Recipient HCV status
+corrdata <- corrdata %>% mutate(
+  RANTI_HCV = case_when(
+    HEPATITIS_C_FLAG_clean == 0  ~ 0,
+    HEPATITIS_C_FLAG_clean == 1 ~ 1,
+    is.na(HEPATITIS_C_FLAG_clean) ~ NA_real_
+  )
+)
+
+corrdata <- corrdata %>%
+  mutate(RANTI_HCV = factor(RANTI_HCV, labels = c("Negative", "Positive")))
+
+#INR
+corrdata <- corrdata %>% mutate(
+  RINR = INR_TX
+)
+
+corrdata$RINR <- as.numeric(corrdata$RINR)
+
+#Bilirubin
+corrdata$SERUM_BILIRUBIN_TX <- as.numeric(corrdata$SERUM_BILIRUBIN_TX)
+
+#Convert to mg/dl
+corrdata <- corrdata %>% mutate(
+  RBILIRUBIN = SERUM_BILIRUBIN_TX/17.1
+)
+
+#Creatinine
+#Convert umol/l to mg/dl
+corrdata <- corrdata %>%
+  mutate(RCREAT = CREATININE_TX*0.0113)
+
+#Disease Etiology
+corrdata$ORGAN_DIAGNOSIS_CODE_A <- as.numeric(corrdata$ORGAN_DIAGNOSIS_CODE_A)
+corrdata$Secondary_diagnosis <- as.numeric(corrdata$Secondary_diagnosis)
+corrdata$Tertiary <- as.numeric(corrdata$Tertiary)
+corrdata$Quarternary <- as.numeric(corrdata$Quarternary)
+str(corrdata$Secondary_diagnosis)
+
+#NASH
+corrdata <- corrdata  %>% 
+  mutate(NASH = case_when(
+    ORGAN_DIAGNOSIS_CODE_A == 64 ~ 1,
+    Secondary_diagnosis == 64 ~ 1,
+    Tertiary == 64 ~ 1,
+    Quarternary == 64 ~ 1,
+    TRUE ~ 0
+  ))
+
+#HCC
+corrdata <- corrdata %>% mutate(
+  HCC = case_when(
+    ORGAN_DIAGNOSIS_CODE_A == 16 ~ 1,
+    Secondary_diagnosis == 16 ~ 1,
+    Tertiary == 16 ~ 1,
+    Quarternary == 16 ~ 1,
+    TRUE ~ 0
+  )
+)
+
+#ALF
+corrdata <- corrdata %>% mutate(
+  ALF = case_when(
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 4 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 5 ~ 1, 
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 47 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 56 ~ 1, 
+      corrdata$Secondary_diagnosis == 4 ~ 1, 
+      corrdata$Secondary_diagnosis == 5 ~ 1, 
+      corrdata$Secondary_diagnosis == 47 ~ 1, 
+      corrdata$Secondary_diagnosis == 56 ~ 1,
+      corrdata$Tertiary == 4 ~ 1, 
+      corrdata$Tertiary == 5 ~ 1, 
+      corrdata$Tertiary == 47 ~ 1, 
+      corrdata$Tertiary == 56 ~ 1, 
+      corrdata$Quarternary == 4 ~ 1, 
+      corrdata$Quarternary == 5 ~ 1, 
+      corrdata$Quarternary == 47 ~ 1, 
+      corrdata$Quarternary == 56 ~ 1,
+    TRUE ~ 0
+  )
+)
+
+#HCV
+corrdata <- corrdata %>% mutate(
+  HCV = case_when(
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 60 ~ 1,
+      corrdata$Secondary_diagnosis == 60 ~ 1,
+      corrdata$Tertiary == 60 ~ 1,
+      corrdata$Quarternary == 60 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 61 ~ 1,
+      corrdata$Secondary_diagnosis == 61 ~ 1,
+      corrdata$Tertiary == 61 ~ 1,
+      corrdata$Quarternary == 61 ~ 1,
+    TRUE ~ 0
+  )
+)
+
+
+
+#PSC
+corrdata <- corrdata %>% mutate(
+  PSC =  case_when(
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 11 ~ 1,
+      corrdata$Secondary_diagnosis == 11 ~ 1,
+      corrdata$Tertiary == 11 ~ 1,
+      corrdata$Quarternary == 11 ~ 1,
+    TRUE ~ 0
+  )
+)
+
+#HBV
+corrdata <- corrdata %>% mutate(
+  HBV = case_when(
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 43 ~ 1,
+      corrdata$Secondary_diagnosis == 43 ~ 1,
+      corrdata$Tertiary == 43 ~ 1,
+      corrdata$Quarternary == 43 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 2 ~ 1,
+      corrdata$Secondary_diagnosis == 2 ~ 1,
+      corrdata$Tertiary == 2 ~ 1,
+      corrdata$Quarternary == 2 ~ 1,
+    TRUE ~ 0
+  )
+)
+
+
+
+#PBC
+corrdata <- corrdata %>% mutate(
+  PBC = case_when(
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 7 ~ 1,
+      corrdata$Secondary_diagnosis == 7 ~ 1,
+      corrdata$Tertiary == 7 ~ 1,
+      corrdata$Quarternary == 7 ~ 1,
+    TRUE ~ 0
+  )
+)
+
+#Alcoholic
+corrdata <- corrdata %>% mutate(
+  ALD = case_when(
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 9 ~ 1,
+      corrdata$Secondary_diagnosis == 9 ~ 1,
+      corrdata$Tertiary == 9 ~ 1,
+      corrdata$Quarternary == 9 ~ 1,
+    TRUE ~ 0
+  )
+)
+
+#Autoimmune and cryptogenic
+corrdata <- corrdata %>% mutate(
+  AID = case_when(
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 8 ~ 1,
+      corrdata$Secondary_diagnosis == 8 ~ 1,
+      corrdata$Tertiary == 8 ~ 1,
+      corrdata$Quarternary == 8 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 6 ~ 1,
+      corrdata$Secondary_diagnosis == 6 ~ 1,
+      corrdata$Tertiary == 6 ~ 1,
+      corrdata$Quarternary == 6 ~ 1,
+    TRUE ~ 0
+  )
+)
+
+#Metabolic liver disease
+corrdata <- corrdata %>% mutate(
+  MET = case_when(
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 64 ~ 1,
+      corrdata$Secondary_diagnosis == 64 ~ 1,
+      corrdata$Tertiary == 64 ~ 1,
+      corrdata$Quarternary == 64 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 20 ~ 1,
+      corrdata$Secondary_diagnosis == 20 ~ 1,
+      corrdata$Tertiary == 20 ~ 1,
+      corrdata$Quarternary == 20 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 22 ~ 1,
+      corrdata$Secondary_diagnosis == 22 ~ 1,
+      corrdata$Tertiary == 22 ~ 1,
+      corrdata$Quarternary == 22 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 23 ~ 1,
+      corrdata$Secondary_diagnosis == 23 ~ 1,
+      corrdata$Tertiary == 23 ~ 1,
+      corrdata$Quarternary == 23 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 34 ~ 1,
+      corrdata$Secondary_diagnosis == 34 ~ 1,
+      corrdata$Tertiary == 34 ~ 1,
+      corrdata$Quarternary == 34 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 21 ~ 1,
+      corrdata$Secondary_diagnosis == 21 ~ 1,
+      corrdata$Tertiary == 21 ~ 1,
+      corrdata$Quarternary == 21 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 58 ~ 1,
+      corrdata$Secondary_diagnosis == 58 ~ 1,
+      corrdata$Tertiary == 58 ~ 1,
+      corrdata$Quarternary == 58 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 24 ~ 1,
+      corrdata$Secondary_diagnosis == 24 ~ 1,
+      corrdata$Tertiary == 24 ~ 1,
+      corrdata$Quarternary == 24 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 25 ~ 1,
+      corrdata$Secondary_diagnosis == 25 ~ 1,
+      corrdata$Tertiary == 25 ~ 1,
+      corrdata$Quarternary == 25 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 26 ~ 1,
+      corrdata$Secondary_diagnosis == 26 ~ 1,
+      corrdata$Tertiary == 26 ~ 1,
+      corrdata$Quarternary == 26 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 27 ~ 1,
+      corrdata$Secondary_diagnosis == 27 ~ 1,
+      corrdata$Tertiary == 27 ~ 1,
+      corrdata$Quarternary == 27 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 28 ~ 1,
+      corrdata$Secondary_diagnosis == 28 ~ 1,
+      corrdata$Tertiary == 28 ~ 1,
+      corrdata$Quarternary == 28 ~ 1,
+      corrdata$ORGAN_DIAGNOSIS_CODE_A == 29 ~ 1,
+      corrdata$Secondary_diagnosis == 29 ~ 1,
+      corrdata$Tertiary == 29 ~ 1,
+      corrdata$Quarternary == 29 ~ 1,
+      TRUE ~ 0
+  )
+)
+
+
+#Other 
+corrdata <- corrdata %>% mutate(
+  OTH = case_when(
+    HCC == 0 & ALF == 0 & HCV == 0 & PSC == 0 & HBV == 0 & PBC == 0 & ALD == 0 & AID == 0 & MET == 0 ~ 1,
+    TRUE ~ 0
+  )
+)
+
+
+corrdata <- corrdata %>% mutate(
+  UKT_PLDGRP = case_when(
+    HCC == 1 ~ 1,
+    ALF == 1 ~ 2,
+    HCV == 1 ~ 3,
+    PSC == 1 ~ 4,
+    HBV == 1 ~ 5,
+    PBC == 1 ~ 6,
+    ALD == 1 ~ 7,
+    AID == 1 ~ 8,
+    MET == 1 ~ 9,
+    OTH == 1 ~ 10
+  )
+) %>%
+  mutate(UKT_PLDGRP = factor(UKT_PLDGRP, labels = c("HCC", "ALF", "HCV", "PSC", "HBV", "PBC", "ALD", "AID", "MET", "Others")))
+
+corrdata <- corrdata %>% mutate(
+  UKT_PLDGRP_NASH = case_when(
+    HCC == 1 ~ 1,
+    ALF == 1 ~ 2,
+    HCV == 1 ~ 3,
+    PSC == 1 ~ 4,
+    HBV == 1 ~ 5,
+    PBC == 1 ~ 6,
+    ALD == 1 ~ 7,
+    AID == 1 ~ 8,
+    NASH == 1 ~ 9,
+    OTH == 1 ~ 10
+  )
+) %>%
+  mutate(UKT_PLDGRP_NASH = factor(UKT_PLDGRP_NASH, labels = c("HCC", "ALF", "HCV", "PSC", "HBV", "PBC", "ALD", "AID", "NASH", "Others")))
+
+corrdata %>% select(HCC, ALF, HCV, PSC, HBV, PBC, ALD, AID, MET, UKT_PLDGRP) 
+
+#HCC with other
+corrdata <- corrdata %>% mutate(
+  HCCwithother = case_when(
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Secondary_diagnosis %in% c(4,5,47,56) ~ 1,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Tertiary %in% c(4,5,47,56) ~ 1,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Quarternary %in% c(4,5,47,56) ~ 1,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Secondary_diagnosis == 60 ~ 2,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Tertiary == 60 ~ 2,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Quarternary == 60 ~ 2,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Secondary_diagnosis == 11 ~ 3,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Tertiary == 11 ~ 3,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Quarternary == 11 ~ 3,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Secondary_diagnosis %in% c(43, 2) ~ 4,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Tertiary %in% c(43, 2) ~ 4,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Quarternary %in% c(43, 2) ~ 4,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Secondary_diagnosis == 7 ~ 5,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Tertiary == 7 ~ 5,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Quarternary == 7 ~ 5,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Secondary_diagnosis == 9 ~ 6,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Tertiary == 9 ~ 6,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Quarternary == 9 ~ 6,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Secondary_diagnosis %in% c(8, 6) ~ 7,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Tertiary %in% c(8,6) ~ 7,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Quarternary %in% c(8,6) ~ 7,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Secondary_diagnosis %in% c(64, 20, 21, 22, 23, 34, 58, 24, 25, 26, 27, 28, 29) ~ 8,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Tertiary %in% c(64, 20, 21, 22, 23, 34, 58, 24, 25, 26, 27, 28, 29) ~ 8,
+    ORGAN_DIAGNOSIS_CODE_A == 16 & Quarternary %in% c(64, 20, 21, 22, 23, 34, 58, 24, 25, 26, 27, 28, 29) ~ 8
+  )
+) %>% mutate(HCCwithother = factor(HCCwithother, labels = c("HCV", "PSC", "HBV", "PBC", "ALD", "AID", "MET")))
+```
+
+**Causes of death**
+```{r}
+corrdata <- corrdata %>% mutate(DEATH_CAUSE_CODE = as.numeric(DEATH_CAUSE_CODE))
+
+corrdata <- corrdata %>% mutate(
+  COD_cardiovascular = case_when(
+    DEATH_CAUSE_CODE == 11 ~ 1,
+    DEATH_CAUSE_CODE == 11 ~ 1,
+    DEATH_CAUSE_CODE == 12 ~ 1,
+    DEATH_CAUSE_CODE == 12 ~ 1,
+    DEATH_CAUSE_CODE == 17 ~ 1,
+    DEATH_CAUSE_CODE == 17 ~ 1,
+    DEATH_CAUSE_CODE == 14 ~ 1,
+    DEATH_CAUSE_CODE == 14 ~ 1,
+    DEATH_CAUSE_CODE == 15 ~ 1,
+    DEATH_CAUSE_CODE == 15 ~ 1,
+    DEATH_CAUSE_CODE == 16 ~ 1,
+    DEATH_CAUSE_CODE == 16 ~ 1,
+    DEATH_CAUSE_CODE == 18 ~ 1,
+    DEATH_CAUSE_CODE == 18 ~ 1,
+    DEATH_CAUSE_CODE == 13 ~ 1,
+    DEATH_CAUSE_CODE == 13 ~ 1,
+    DEATH_CAUSE_CODE == 21 ~ 1,
+    DEATH_CAUSE_CODE == 21 ~ 1,
+    DEATH_CAUSE_CODE == 22 ~ 1,
+    DEATH_CAUSE_CODE == 22 ~ 1,
+    DEATH_CAUSE_CODE == 30 ~ 1,
+    DEATH_CAUSE_CODE == 30 ~ 1,
+    DEATH_CAUSE_CODE == 24 ~ 1,
+    DEATH_CAUSE_CODE == 24 ~ 1,
+    DEATH_CAUSE_CODE == 25 ~ 1,
+    DEATH_CAUSE_CODE == 25 ~ 1,
+    DEATH_CAUSE_CODE == 26 ~ 1,
+    DEATH_CAUSE_CODE == 26 ~ 1,
+    DEATH_CAUSE_CODE == 27 ~ 1,
+    DEATH_CAUSE_CODE == 27 ~ 1,
+    DEATH_CAUSE_CODE == 28 ~ 1,
+    DEATH_CAUSE_CODE == 28 ~ 1,
+    DEATH_CAUSE_CODE == 23 ~ 1,
+    DEATH_CAUSE_CODE == 23 ~ 1,
+    DEATH_CAUSE_CODE == 29 ~ 1,
+    DEATH_CAUSE_CODE == 29 ~ 1,
+    DEATH_CAUSE_CODE == 55 ~ 1,
+    DEATH_CAUSE_CODE == 55 ~ 1,
+    DEATH_CAUSE_CODE == 73 ~ 1,
+    DEATH_CAUSE_CODE == 73 ~ 1,
+    DEATH_CAUSE_CODE == 56 ~ 1,
+    DEATH_CAUSE_CODE == 56 ~ 1,
+    DEATH_CAUSE_CODE == 57 ~ 1,
+    DEATH_CAUSE_CODE == 57 ~ 1,
+    DEATH_CAUSE_CODE == 71 ~ 1,
+    DEATH_CAUSE_CODE == 71 ~ 1,
+    TRUE ~ 0))
+
+corrdata <- corrdata %>% mutate(COD_cardiovascular = factor(COD_cardiovascular, labels = c("Cardiovascular COD", "Noncardiovascular COD")))
+
+corrdata <- corrdata %>% mutate(
+  COD_malignancy = case_when(
+    DEATH_CAUSE_CODE == 66 ~ 1,
+    DEATH_CAUSE_CODE == 66 ~ 1,
+    DEATH_CAUSE_CODE == 67 ~ 1,
+    DEATH_CAUSE_CODE == 67 ~ 1,
+    DEATH_CAUSE_CODE == 63 ~ 1,
+    DEATH_CAUSE_CODE == 63 ~ 1,
+    DEATH_CAUSE_CODE == 64 ~ 1,
+    DEATH_CAUSE_CODE == 64 ~ 1,
+    TRUE ~ 0))
+
+corrdata <- corrdata %>% mutate(COD_malignancy = factor(COD_malignancy, labels = c("Malignancy-related COD", "Nonmalignancy-related COD")))
+
+corrdata <- corrdata %>% mutate(
+  COD_infection = case_when(
+    DEATH_CAUSE_CODE == 3 ~ 1,
+    DEATH_CAUSE_CODE == 3 ~ 1,
+    DEATH_CAUSE_CODE == 4 ~ 1,
+    DEATH_CAUSE_CODE == 4 ~ 1,
+    DEATH_CAUSE_CODE == 5 ~ 1,
+    DEATH_CAUSE_CODE == 5 ~ 1,
+    DEATH_CAUSE_CODE == 6 ~ 1,
+    DEATH_CAUSE_CODE == 6 ~ 1,
+    DEATH_CAUSE_CODE == 7 ~ 1,
+    DEATH_CAUSE_CODE == 7 ~ 1,
+    DEATH_CAUSE_CODE == 8 ~ 1,
+    DEATH_CAUSE_CODE == 8 ~ 1,
+    DEATH_CAUSE_CODE == 9 ~ 1,
+    DEATH_CAUSE_CODE == 9 ~ 1,
+    DEATH_CAUSE_CODE == 10 ~ 1,
+    DEATH_CAUSE_CODE == 10 ~ 1,
+    DEATH_CAUSE_CODE == 31 ~ 1,
+    DEATH_CAUSE_CODE == 31 ~ 1,
+    DEATH_CAUSE_CODE == 32 ~ 1,
+    DEATH_CAUSE_CODE == 32 ~ 1,
+    DEATH_CAUSE_CODE == 33 ~ 1,
+    DEATH_CAUSE_CODE == 33 ~ 1,
+    DEATH_CAUSE_CODE == 36 ~ 1,
+    DEATH_CAUSE_CODE == 36 ~ 1,
+    DEATH_CAUSE_CODE == 37 ~ 1,
+    DEATH_CAUSE_CODE == 37 ~ 1,
+    DEATH_CAUSE_CODE == 34 ~ 1,
+    DEATH_CAUSE_CODE == 34 ~ 1,
+    DEATH_CAUSE_CODE == 35 ~ 1,
+    DEATH_CAUSE_CODE == 35 ~ 1,
+    DEATH_CAUSE_CODE == 38 ~ 1,
+    DEATH_CAUSE_CODE == 38 ~ 1,
+    DEATH_CAUSE_CODE == 39 ~ 1,
+    DEATH_CAUSE_CODE == 39 ~ 1,
+    TRUE ~ 0))
+
+corrdata <- corrdata %>% mutate(COD_infection = factor(COD_infection, labels = c("Infection COD", "Noninfection COD")))
+
+corrdata <- corrdata %>% mutate(
+  COD_liverrelated = case_when(
+    DEATH_CAUSE_CODE == 41 ~ 1,
+    DEATH_CAUSE_CODE == 41 ~ 1,
+    DEATH_CAUSE_CODE == 42 ~ 1,
+    DEATH_CAUSE_CODE == 42 ~ 1,
+    DEATH_CAUSE_CODE == 43 ~ 1,
+    DEATH_CAUSE_CODE == 43 ~ 1,
+    DEATH_CAUSE_CODE == 44 ~ 1,
+    DEATH_CAUSE_CODE == 44 ~ 1,
+    DEATH_CAUSE_CODE == 45 ~ 1,
+    DEATH_CAUSE_CODE == 45 ~ 1,
+    DEATH_CAUSE_CODE == 46 ~ 1,
+    DEATH_CAUSE_CODE == 46 ~ 1,
+    DEATH_CAUSE_CODE == 74 ~ 1,
+    DEATH_CAUSE_CODE == 74 ~ 1,
+    DEATH_CAUSE_CODE == 61 ~ 1,
+    DEATH_CAUSE_CODE == 61 ~ 1,
+    TRUE ~ 0))
+
+corrdata <- corrdata %>% mutate(COD_liverrelated = factor(COD_liverrelated, labels = c("Liver disease or graft failure COD", "Nonliverdisease or graft failure COD")))
+
+corrdata <- corrdata %>% mutate(
+  COD_other = case_when(
+    DEATH_CAUSE_CODE == 2 ~ 1,
+    DEATH_CAUSE_CODE == 2 ~ 1,
+    DEATH_CAUSE_CODE == 20 ~ 1,
+    DEATH_CAUSE_CODE == 20 ~ 1,
+    DEATH_CAUSE_CODE == 62 ~ 1,
+    DEATH_CAUSE_CODE == 62 ~ 1,
+    DEATH_CAUSE_CODE == 68 ~ 1,
+    DEATH_CAUSE_CODE == 68 ~ 1,
+    DEATH_CAUSE_CODE == 69 ~ 1,
+    DEATH_CAUSE_CODE == 69 ~ 1,
+    DEATH_CAUSE_CODE == 70 ~ 1,
+    DEATH_CAUSE_CODE == 70 ~ 1,
+    DEATH_CAUSE_CODE == 40 ~ 1,
+    DEATH_CAUSE_CODE == 40 ~ 1,
+    DEATH_CAUSE_CODE == 47 ~ 1,
+    DEATH_CAUSE_CODE == 47 ~ 1,
+    DEATH_CAUSE_CODE == 48 ~ 1,
+    DEATH_CAUSE_CODE == 48 ~ 1,
+    DEATH_CAUSE_CODE == 59 ~ 1,
+    DEATH_CAUSE_CODE == 59 ~ 1,
+    DEATH_CAUSE_CODE == 75 ~ 1,
+    DEATH_CAUSE_CODE == 75 ~ 1,
+    DEATH_CAUSE_CODE == 19 ~ 1,
+    DEATH_CAUSE_CODE == 19 ~ 1,
+    DEATH_CAUSE_CODE == 49 ~ 1,
+    DEATH_CAUSE_CODE == 49 ~ 1,
+    DEATH_CAUSE_CODE == 77 ~ 1,
+    DEATH_CAUSE_CODE == 77 ~ 1,
+    DEATH_CAUSE_CODE == 90 ~ 1,
+    DEATH_CAUSE_CODE == 90 ~ 1,
+    DEATH_CAUSE_CODE == 0 ~ 1,
+    DEATH_CAUSE_CODE == 0 ~ 1,
+    DEATH_CAUSE_CODE == 99 ~ 1,
+    DEATH_CAUSE_CODE == 99 ~ 1,
+    DEATH_CAUSE_CODE == 81 ~ 1,
+    DEATH_CAUSE_CODE == 81 ~ 1,
+    DEATH_CAUSE_CODE == 82 ~ 1,
+    DEATH_CAUSE_CODE == 82 ~ 1,
+    DEATH_CAUSE_CODE == 50 ~ 1,
+    DEATH_CAUSE_CODE == 50 ~ 1,
+    DEATH_CAUSE_CODE == 51 ~ 1,
+    DEATH_CAUSE_CODE == 51 ~ 1,
+    DEATH_CAUSE_CODE == 52 ~ 1,
+    DEATH_CAUSE_CODE == 52 ~ 1,
+    DEATH_CAUSE_CODE == 53 ~ 1,
+    DEATH_CAUSE_CODE == 53 ~ 1,
+    DEATH_CAUSE_CODE == 54 ~ 1,
+    DEATH_CAUSE_CODE == 54 ~ 1,
+    TRUE ~ 0
+    ))
+
+corrdata <- corrdata %>% mutate(COD_other = factor(COD_other, labels = c("Other COD", "Non-Other (previously categorized) COD")))
+```
+
+**Era recoding**
+```{r}
+corrdata <- corrdata %>% mutate(Eras = case_when(
+  TX_YR <= 2004 ~ 1,
+  TX_YR >= 2005 & TX_YR < 2010 ~ 2,
+  TX_YR >= 2010 & TX_YR < 2015 ~ 3,
+  TX_YR >= 2015 ~ 4
+))
+
+corrdata <- corrdata %>% mutate(Eras = factor(Eras, labels = c("2000-2004", "2005-2009", "2010-2014", "2015-2018")))
+```
+
+
+
+
