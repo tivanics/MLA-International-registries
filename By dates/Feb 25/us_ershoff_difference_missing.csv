@@ -1,0 +1,266 @@
+variable,n_miss,pct_miss,What_to_do
+COD_WL,60277,100,Exclude based on missingness
+COD_OSTXT_WL,60277,100,Exclude based on missingness
+DEATH_DATE,60277,100,Exclude based on missingness
+WLHL,60277,100,Exclude based on missingness
+WLLI,60277,100,Exclude based on missingness
+WLPI,60277,100,Exclude based on missingness
+WLVC,60277,100,Exclude based on missingness
+FINAL_CTP_SCORE,60277,100,Exclude based on missingness
+PRVTXDIF,60277,100,Exclude based on missingness
+TXHRT,60277,100,Exclude based on missingness
+TXINT,60277,100,Exclude based on missingness
+TXKID,60277,100,Exclude based on missingness
+TXLNG,60277,100,Exclude based on missingness
+TXPAN,60277,100,Exclude based on missingness
+TXVCA,60277,100,Exclude based on missingness
+CLSTR_OLD,60277,100,Exclude based on missingness
+CLSTRTYP_OLD,60277,100,Exclude based on missingness
+HBEAB_OLD,60277,100,Exclude based on missingness
+HEPD_OLD,60277,100,Exclude based on missingness
+MRCREATG_OLD,60277,100,Exclude based on missingness
+TOT_SERUM_ALBUM,60277,100,Exclude based on missingness
+CMV_OLD_LIV_DON,60277,100,Exclude based on missingness
+DOBUT_DON_OLD,60277,100,Exclude based on missingness
+DOPAMINE_DON_OLD,60277,100,Exclude based on missingness
+HTLV1_OLD_DON,60277,100,Exclude based on missingness
+HTLV2_OLD_DON,60277,100,Exclude based on missingness
+OTH_DON_MED1_OSTXT_DON_OLD,60277,100,Exclude based on missingness
+OTH_DON_MED2_OSTXT_DON_OLD,60277,100,Exclude based on missingness
+OTH_DON_MED3_OSTXT_DON_OLD,60277,100,Exclude based on missingness
+PRETREAT_MED_DON_OLD,60277,100,Exclude based on missingness
+PT_OTH4_OSTXT_DON,60277,100,Exclude based on missingness
+CONTIN_ALCOHOL_OLD_DON,60277,100,Exclude based on missingness
+CONTIN_IV_DRUG_OLD_DON,60277,100,Exclude based on missingness
+HIST_ALCOHOL_OLD_DON,60277,100,Exclude based on missingness
+HIST_IV_DRUG_OLD_DON,60277,100,Exclude based on missingness
+ENCEPH_TRR_OLD,60277,100,Exclude based on missingness
+ASCITES_TRR_OLD,60277,100,Exclude based on missingness
+PREV_TX_DATE,60277,100,Exclude based on missingness
+HEPATIC_OUT_OBS,60277,100,Exclude based on missingness
+PORTAL_VEIN_THROM,60277,100,Exclude based on missingness
+MULTIORG,60277,100,Exclude based on missingness
+DIS_SGOT,60277,100,Exclude based on missingness
+DIS_ALKPHOS,60277,100,Exclude based on missingness
+PRI_PAYMENT_DON,60277,100,Exclude based on missingness
+PRI_PAYMENT_CTRY_DON,60277,100,Exclude based on missingness
+MEDICARE_DON,60277,100,Exclude based on missingness
+MEDICAID_DON,60277,100,Exclude based on missingness
+OTH_GOVT_DON,60277,100,Exclude based on missingness
+PRIV_INS_DON,60277,100,Exclude based on missingness
+HMO_PPO_DON,60277,100,Exclude based on missingness
+SELF_DON,60277,100,Exclude based on missingness
+DONATION_DON,60277,100,Exclude based on missingness
+FREE_DON,60277,100,Exclude based on missingness
+TRANSFUS_INTRAOP_NUM_OLD_DON,60277,100,Exclude based on missingness
+TRANSFUS_PRIOR_NUM_OLD_DON,60277,100,Exclude based on missingness
+WLKP,60276,99.99834099,Exclude based on missingness
+INIT_CTP_SCORE,60276,99.99834099,Exclude based on missingness
+WLLU,60275,99.99668198,Exclude based on missingness
+WLHR,60273,99.99336397,Exclude based on missingness
+PREV_PI_TX_TCR_ARCHIVE,60270,99.98838695,Exclude based on missingness
+WLIN,60249,99.95354779,Exclude based on missingness
+WLPA,60245,99.94691176,Exclude based on missingness
+ACADEMIC_LEVEL_TRR,60197,99.86727939,Exclude based on missingness
+ACADEMIC_PRG_TRR,60197,99.86727939,Exclude based on missingness
+NEOADJUVANT_THERAPY_TCR,60169,99.82082718,Exclude based on missingness
+MALIG_OSTXT_TRR,60168,99.81916817,Exclude based on missingness
+ACADEMIC_PRG_TCR,60116,99.73289978,Exclude based on missingness
+ACADEMIC_LEVEL_TCR,60113,99.72792276,Exclude based on missingness
+PRI_PAYMENT_CTRY_TRR,60048,99.62008726,Exclude based on missingness
+PRI_PAYMENT_CTRY_TCR,60042,99.61013322,Exclude based on missingness
+INO_PROCURE_OSTXT_3,60037,99.60183818,Exclude based on missingness
+COD3_OSTXT,60002,99.54377292,Exclude based on missingness
+CITIZEN_COUNTRY,59992,99.52718284,Exclude based on missingness
+RECOV_COUNTRY,59972,99.49400269,Exclude based on missingness
+WLKI,59900,99.37455414,Exclude based on missingness
+CANCER_OTH_OSTXT_DON,59867,99.31980689,Exclude based on missingness
+YR_ENTRY_US_TCR,59695,99.03445759,Exclude based on missingness
+OTH_LIFE_SUP_OSTXT_TCR,59671,98.99464141,Exclude based on missingness
+ENCEPH_TCR,59643,98.94818919,Exclude based on missingness
+ASCITES_TCR,59643,98.94818919,Exclude based on missingness
+MUSCLE_WAST_TCR,59643,98.94818919,Exclude based on missingness
+VAD_TAH,59642,98.94653019,Exclude based on missingness
+INOTROPES,59634,98.93325812,Exclude based on missingness
+IABP,59634,98.93325812,Exclude based on missingness
+PGE,59634,98.93325812,Exclude based on missingness
+ECMO,59634,98.93325812,Exclude based on missingness
+COD3,59433,98.5997976,Exclude based on missingness
+LIV_DON_TY_OSTXT,59415,98.56993546,Exclude based on missingness
+INO_PROCURE_AGENT_3,59411,98.56329943,Exclude based on missingness
+INO_PROCURE_OSTXT_2,59382,98.51518821,Exclude based on missingness
+DGN2_OSTXT_TCR,59348,98.45878196,Exclude based on missingness
+GRF_FAIL_CAUSE_OSTXT,59348,98.45878196,Exclude based on missingness
+COD2_OSTXT,59224,98.25306502,Exclude based on missingness
+COD_OSTXT_DON,59070,97.99757785,Exclude based on missingness
+INO_PROCURE_OSTXT_1,59019,97.91296846,Exclude based on missingness
+CMV_TEST_DON,58914,97.73877267,Exclude based on missingness
+EBV_TEST_DON,58914,97.73877267,Exclude based on missingness
+HBV_TEST_DON,58914,97.73877267,Exclude based on missingness
+HCV_TEST_DON,58914,97.73877267,Exclude based on missingness
+PREV_MALIG_TY_OSTXT,58750,97.46669542,Exclude based on missingness
+MALIG_TY_OSTXT,58656,97.31074871,Exclude based on missingness
+PX_NON_COMPL,58630,97.26761451,Exclude based on missingness
+DIFFUSE_CHOLANG,58548,97.13157589,Exclude based on missingness
+HEPATIC_ART_THROM,58547,97.12991688,Exclude based on missingness
+OTHER_VASC_THROMB,58547,97.12991688,Exclude based on missingness
+PRI_NON_FUNC,58547,97.12991688,Exclude based on missingness
+CANCER_FREE_INT_DON,58269,96.66871278,Exclude based on missingness
+RETXDATE,58206,96.5641953,Exclude based on missingness
+MALIG_TY_TRR,58031,96.27386897,Exclude based on missingness
+HBV_DNA_DON,57851,95.97524761,Exclude based on missingness
+HCV_RIBA_DON,57844,95.96363455,Exclude based on missingness
+HCV_ANTIBODY_DON,57844,95.96363455,Exclude based on missingness
+HCV_RNA_DON,57844,95.96363455,Exclude based on missingness
+CMV_NUCLEIC_DON,57827,95.93543142,Exclude based on missingness
+CMV_IGG_DON,57827,95.93543142,Exclude based on missingness
+CMV_IGM_DON,57827,95.93543142,Exclude based on missingness
+LIV_DON_TY,57752,95.81100586,Exclude based on missingness
+EDUCATION_DON,57752,95.81100586,Exclude based on missingness
+STATUS_LDR,57752,95.81100586,Exclude based on missingness
+VAL_DT_LDR,57752,95.81100586,Exclude based on missingness
+OTHER_INF_CONF_DON,57713,95.74630456,Exclude based on missingness
+PRI_GRF_FAIL,57527,95.43772915,Exclude based on missingness
+VASC_THROMB,57527,95.43772915,Exclude based on missingness
+BILIARY,57526,95.43607014,Exclude based on missingness
+VESSELS_NUM_STEN_DON,57437,95.28841847,Exclude based on missingness
+COD2,57378,95.19053702,Exclude based on missingness
+REJ_CHRONIC,57209,94.91016474,Exclude based on missingness
+BLOOD_INF_CONF_DON,57136,94.78905719,Exclude based on missingness
+DIAG_OSTXT,57131,94.78076215,Exclude based on missingness
+CORE_COOL_DON,56676,94.0259137,Exclude based on missingness
+CONTROLLED_DON,56676,94.0259137,Exclude based on missingness
+DGN_OSTXT_TCR,56628,93.94628133,Exclude based on missingness
+OTHER_INF_OSTXT_DON,56049,92.98571594,Exclude based on missingness
+INFECT,55935,92.79658908,Exclude based on missingness
+HEP_DENOVO,55934,92.79493007,Exclude based on missingness
+HEP_RECUR,55934,92.79493007,Exclude based on missingness
+RECUR_DISEASE,55934,92.79493007,Exclude based on missingness
+REJ_ACUTE,55933,92.79327107,Exclude based on missingness
+GRF_FAIL_DATE,55928,92.78497603,Exclude based on missingness
+URINE_INF_CONF_DON,55771,92.52451184,Exclude based on missingness
+COD_OSTXT,55610,92.25741162,Exclude based on missingness
+INO_PROCURE_AGENT_2,54085,89.72742505,Exclude based on missingness
+EXC_OTHER_DIAG,53999,89.5847504,Exclude based on missingness
+HIV_NAT,51471,85.39077924,Exclude based on missingness
+HCV_NAT,51471,85.39077924,Exclude based on missingness
+HBV_NAT,51471,85.39077924,Exclude based on missingness
+CONTIN_COCAINE_DON,50239,83.3468819,Exclude based on missingness
+PREV_MALIG_TY,49304,81.79570981,Exclude based on missingness
+COD,47554,78.89244654,Exclude based on missingness
+COMPOSITE_DEATH_DATE,47165,78.24709259,Exclude based on missingness
+CONTIN_CIG_DON,46849,77.72284619,Exclude based on missingness
+PULM_INF_CONF_DON,42950,71.25437563,Exclude based on missingness
+DIET_DON,39019,64.73281683,Exclude based on missingness
+DIURETICS_DON,39019,64.73281683,Exclude based on missingness
+OTHER_HYPERTENS_MED_DON,39019,64.73281683,Exclude based on missingness
+HLAMIS,37962,62.97924582,Exclude based on missingness
+DRMIS,37958,62.97260978,Exclude based on missingness
+BMIS,37779,62.67564743,Exclude based on missingness
+AMIS,37765,62.65242132,Exclude based on missingness
+RA1,37473,62.16799111,Exclude based on missingness
+RA2,37473,62.16799111,Exclude based on missingness
+RB1,37473,62.16799111,Exclude based on missingness
+RB2,37473,62.16799111,Exclude based on missingness
+RDR1,37473,62.16799111,Exclude based on missingness
+RDR2,37473,62.16799111,Exclude based on missingness
+CONTIN_OTH_DRUG_DON,37207,61.72669509,Exclude based on missingness
+HBV_NAT_DON,37081,61.51766014,Exclude based on missingness
+HCV_NAT_DON,37081,61.51766014,Exclude based on missingness
+HIV_NAT_DON,37081,61.51766014,Exclude based on missingness
+HBV_SURF_TOTAL,36379,60.35303681,Exclude based on missingness
+HCC_DIAGNOSIS_TCR,35778,59.35597326,Exclude based on missingness
+HCC_DIAG,31764,52.69671682,Exclude based on missingness
+INO_PROCURE_AGENT_1,31761,52.6917398,Exclude based on missingness
+PT_OTH3_OSTXT_DON,28774,47.73628415,Exclude based on missingness
+MALIG_TRR,24375,40.4383098,Exclude based on missingness
+FUNC_STAT_TRF,22323,37.03402625,Exclude based on missingness
+OTHER_INF_DON,22225,36.8714435,Exclude based on missingness
+LV_EJECT_DON,21283,35.30865836,Exclude based on missingness
+LV_EJECT_METH_DON,21277,35.29870432,Exclude based on missingness
+TRTREJ1Y,14143,23.46334423,Postop variable exclude
+PT_OTH2_OSTXT_DON,13431,22.28213083,Exclude based on freetext
+TRTREJ6M,12421,20.60653317,Postop variable exclude
+PT_OTH1_OSTXT_DON,6089,10.10169716,Exclude based on freetext
+ADMIT_DATE_DON,2567,4.258672462,Exclude (this should be almost similar to transplant date) - this is the admission data of the donor HOWEVER we just need the time from donor admission to the donor_death date (datediff(donor_death_date -admit_date_don))
+DA2,2533,4.202266204,Include
+DDR2,2533,4.202266204,Include
+DB2,2528,4.193971166,Include
+HBSAB_DON,2526,4.190653151,Include
+BLOOD_INF_DON,2525,4.188994144,Include
+PULM_INF_DON,2525,4.188994144,Include
+URINE_INF_DON,2525,4.188994144,Include
+EXTRACRANIAL_CANCER_DON,2525,4.188994144,Include
+HIST_DIABETES_DON,2525,4.188994144,Include
+HIST_HYPERTENS_DON,2525,4.188994144,Include
+INTRACRANIAL_CANCER_DON,2525,4.188994144,Include
+SKIN_CANCER_DON,2525,4.188994144,Include
+ALCOHOL_HEAVY_DON,2525,4.188994144,Include
+REFERRAL_DATE,2525,4.188994144,Exclude
+TRANSFUS_TERM_DON,2525,4.188994144,Include
+STATUS_DDR,2525,4.188994144,Exclude I don’t know what this is
+VAL_DT_DDR,2525,4.188994144,Exclude I don’t know what this is
+DA1,2522,4.184017121,Include
+DB1,2522,4.184017121,Include
+DDR1,2522,4.184017121,Include
+GRF_STAT,1569,2.602982896,Postop variable exclude
+LOS,749,1.242596679,Postop variable exclude
+DISCHARGE_DATE,651,1.080013936,Postop variable exclude
+HOME_STATE_DON,332,0.550790517,Include
+PERM_STATE_TRR,324,0.537518456,Include
+PERM_STATE,315,0.522587388,Include
+INIT_MELD_OR_PELD,257,0.426364948,Include - I think this is MELD at listing
+FINAL_DIALYSIS_PRIOR_WEEK,64,0.106176485,Include - I think this is dialysis in the week prior to transplant
+FINAL_MELD_PELD_LAB_SCORE,52,0.086268394,Include - I think this either the MELD score or just a designation (MELD/PELD) for what the MELD score denotes
+FINAL_SERUM_CREAT,52,0.086268394,Include - I think this is creatinine at transplant
+END_BMI_CALC,15,0.024885114,Include - I think this is BMI at the end of the waitlist
+FINAL_ALBUMIN,7,0.011613053,Include - I think this is albumin at transplant
+FINAL_BILIRUBIN,3,0.004977023,Include - I think this is bilirubin at transplant
+FINAL_ASCITES,1,0.001659008,Include - I think this is ascites at transplant
+FINAL_ENCEPH,1,0.001659008,Include - I think this is encephalopathy at transplant
+NUM_PREV_TX,0,0,Should be 0 (excluding retransplants)
+REM_CD,0,0,Exclude
+END_DATE,0,0,Exclude (should be similar to transplant date) but ask how to date with dates how does it influence? END_Date should be the same as TX date
+INIT_DATE,0,0,Include unless we don’t have listing date from before? but ask how to date with dates how does it influence?  INIT_date is the listing date (we just need the waitlist days = tx_date or end_date minus init date)
+ETHNICITY,0,0,Include
+REGION,0,0,Include
+WL_ID_CODE,0,0,Exclude
+ARTIFICIAL_LI_TCR,0,0,Include
+FINAL_MELD_OR_PELD,0,0,Include - I think this is the MELD at transplant
+TX_DATE,0,0,Include but don’t we need the raw variable but rather the datediff(tx_date - listdate) = waitlist time
+TX_PROCEDUR_TY,0,0,Include
+ARTIFICIAL_LI_TRR,0,0,Include
+ACUTE_REJ_EPI,0,0,Exclude postop variable
+HIV_SEROSTATUS,0,0,Include
+GCENS,0,0,Already included
+GSURV,0,0,Already included
+PCENS,0,0,Already included
+PSURV,0,0,Already included
+PX_STAT,0,0,Already included through pcens I think
+TXLIV,0,0,Include
+PREV_TX,0,0,Should be 0 (excluding retransplants)
+PREV_TX_ANY,0,0,Include (previous any transplant)
+DON_TY,0,0,Already included I think living or dead donor
+RECOVERY_DATE_DON,0,0,Exclude (should be similar to transplant date) - but ask how to best deal with dates
+CANCER_SITE_DON,0,0,Include
+PX_STAT_DATE,0,0,Exclude - Included already through pcens?
+AGE_GROUP,0,0,Exclude =Should be just A (adult) - exclude
+ADMISSION_DATE,0,0,Include because it would be good to know datediff admission date - tx_date - but ask how to best deal with dates
+TRR_ID_CODE,0,0,Exclude
+DONOR_ID,0,0,Exclude
+LIST_MELD,0,0,Already included I think this is MELD at listing
+TX_MELD,0,0,Already included I think this is MELD at transplant
+LT_ONE_WEEK_DON,0,0,Include
+LISTYR,0,0,Include
+DATA_TRANSPLANT,0,0,Exclude
+DATA_WAITLIST,0,0,Exclude
+CTR_CODE,0,0,Include
+OPO_CTR_CODE,0,0,Include
+INIT_OPO_CTR_CODE,0,0,Include
+END_OPO_CTR_CODE,0,0,Include
+LISTING_CTR_CODE,0,0,Include
+STATUS_TCR,0,0,Exclude I don’t know what this is
+VAL_DT_TCR,0,0,Exclude I don’t know what this is
+STATUS_TRR,0,0,Exclude I don’t know what this is
+VAL_DT_TRR,0,0,Exclude I don’t know what this is
+LC,0,0,Exclude I don’t know what this is
